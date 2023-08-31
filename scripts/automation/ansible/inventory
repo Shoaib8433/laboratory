@@ -1,6 +1,0 @@
-[aws]
-3.90.87.77
-
-[aws:vars]
-ansible_ssh_user=ubuntu
-ansible_ssh_private_key_file=/Users/neosoft1/private-keys/lab-kp-nv.pem

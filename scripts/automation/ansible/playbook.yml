@@ -1,0 +1,95 @@
+---
+  - hosts: "{{ host }}"
+    name: Install Node Exporter
+    become: true
+    gather_facts: false
+    vars:
+        node_exporter_version: 1.6.1
+        node_exporter_username: node_exporter
+    tasks:
+      - name: download node exporter
+        get_url:
+          url: https://github.com/prometheus/node_exporter/releases/download/v{{node_exporter_version}}/node_exporter-{{node_exporter_version}}.linux-amd64.tar.gz
+          dest: /tmp
+      - name: unarchive node exporter
+        unarchive:
+          remote_src: yes
+          src: /tmp/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
+          dest: /tmp
+      - name: create_node_exporter group
+        group:
+          name: "{{ node_exporter_username }}"
+      - name: create node_exporter user
+        user:
+          create_home: false
+          name: "{{ node_exporter_username }}"
+          group: "{{ node_exporter_username }}"
+          shell: /usr/bin/false
+      - name: move node exporter to /usr/local/bin
+        copy:
+          src: /tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter
+          dest: /usr/local/bin/node_exporter
+          remote_src: yes
+          owner: "{{ node_exporter_username }}"
+          group: "{{ node_exporter_username }}"
+          mode: 0755
+      - name: install unit file to systemd
+        template:
+          src: templates/node_exporter.service.j2
+          dest: /etc/systemd/system/node_exporter.service
+          owner: "{{ node_exporter_username }}"
+          group: "{{ node_exporter_username }}"
+          mode: 0600
+      - name: configure systemd to use service
+        systemd:
+          daemon_reload: yes
+          enabled: yes
+          state: started
+          name: node_exporter.service
+  - hosts: "{{ host }}"
+    name: Install Apache Exporter
+    gather_facts: false
+    become: true
+    vars:
+        apache_exporter_username: apache_exporter
+        apache_exporter_version: 1.0.1
+    tasks:
+      - name: download apache exporter
+        get_url:
+          url: https://github.com/Lusitaniae/apache_exporter/releases/download/v{{apache_exporter_version}}/apache_exporter-{{apache_exporter_version}}.linux-amd64.tar.gz
+          dest: /tmp
+      - name: unarchive apache exporter
+        unarchive:
+          remote_src: yes
+          src: /tmp/apache_exporter-{{apache_exporter_version}}.linux-amd64.tar.gz
+          dest: /tmp
+      - name: create_apache_exporter group
+        group:
+          name: "{{ apache_exporter_username }}"
+      - name: create apache_exporter user
+        user:
+          create_home: false
+          name: "{{ apache_exporter_username }}"
+          group: "{{ apache_exporter_username }}"
+          shell: /usr/bin/false
+      - name: move apache exporter to /usr/local/bin
+        copy:
+          src: /tmp/apache_exporter-{{ apache_exporter_version }}.linux-amd64/apache_exporter
+          dest: /usr/local/bin/apache_exporter
+          remote_src: yes
+          owner: "{{ apache_exporter_username }}"
+          group: "{{ apache_exporter_username }}"
+          mode: 0755
+      - name: install unit file to systemd
+        template:
+          src: templates/apache_exporter.service.j2
+          dest: /etc/systemd/system/apache_exporter.service
+          owner: "{{ apache_exporter_username }}"
+          group: "{{ apache_exporter_username }}"
+          mode: 0600
+      - name: configure systemd to use service
+        systemd:
+          daemon_reload: yes
+          enabled: yes
+          state: started
+          name: apache_exporter.service
